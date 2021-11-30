@@ -1,6 +1,6 @@
 defmodule Calculator do
-  @debug true
-  require Logger
+  use Debug, debug: false
+
   def sum([]), do: 0
 
   def sum([n | rest]) do
@@ -134,15 +134,5 @@ defmodule Calculator do
 
   defp power_of_ten_by_positive_n(k, _) do
     k
-  end
-
-  #########################################################################
-  if @debug do
-    defp debug(arg) do
-      Logger.info(inspect(arg))
-      arg
-    end
-  else
-    defp debug(arg), do: arg
   end
 end
