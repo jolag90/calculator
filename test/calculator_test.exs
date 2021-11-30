@@ -44,4 +44,7 @@ defmodule CalculatorTest do
     assert Calculator.prime_number?(13)
   end
 
+  test "10 to the power of" do
+    assert Calculator.power_of_ten(@first_variable) == 1_000_000
+  end
 end

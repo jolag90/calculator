@@ -91,8 +91,40 @@ defmodule Calculator do
   end
 
   #######################################################################
+  @doc """
+  check if 'n' of power_of_ten is smaller, greater or equal to 0
+  if greater then multiply 1 by 10 'n' times
+  if smaller then divide 1 by 10 'n' times
+  if 'n' == 0 commit 1
+  """
+  def power_of_ten(n) when n < 0 do
+    power_of_ten_by_negative_n(1, n)
+  end
 
+  def power_of_ten(n) when n > 0 do
+    power_of_ten_by_positive_n(1, n)
+  end
 
+  def power_of_ten(0), do: 1
+  # _____________________________________________________________________
+
+  defp power_of_ten_by_negative_n(k, n) when n < 0 do
+    power_of_ten_by_negative_n(k / 10, n + 1)
+  end
+
+  defp power_of_ten_by_negative_n(k, _) do
+    k
+  end
+
+  defp power_of_ten_by_positive_n(k, n) when n > 0 do
+    power_of_ten_by_positive_n(k * 10, n - 1)
+  end
+
+  defp power_of_ten_by_positive_n(k, _) do
+    k
+  end
+
+  #########################################################################
   if @debug do
     defp debug(arg) do
       Logger.info(inspect(arg))
