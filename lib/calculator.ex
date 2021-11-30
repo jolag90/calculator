@@ -40,8 +40,12 @@ defmodule Calculator do
   #######################################################################
   def potentiate(_, 0), do: 1
 
-  def potentiate(n, x) do
+  def potentiate(n, x) when x > 0 do
     potentiate_calculation(n, n, x)
+  end
+
+  def potentiate(n, x) when x < 0 do
+    potentiate_calculation_negative(1, n, x)
   end
 
   # _____________________________________________________________________
@@ -52,6 +56,14 @@ defmodule Calculator do
 
   defp potentiate_calculation(k, n, x) do
     potentiate_calculation(k * n, n, x - 1)
+  end
+
+  defp potentiate_calculation_negative(k, _, x) when x > -1 do
+    k |> debug()
+  end
+
+  defp potentiate_calculation_negative(k, n, x) do
+    potentiate_calculation_negative(k / n, n, x + 1)
   end
 
   #######################################################################

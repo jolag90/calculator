@@ -29,11 +29,14 @@ defmodule CalculatorTest do
   end
 
   test "reciprocal with negative number" do
-    assert Calculator.reciprocal(-1) == -1
+    assert Calculator.reciprocal(-10) == -1/10
   end
 
   test "potentiate" do
     assert Calculator.potentiate(@first_variable, @second_variable) == 1296
+  end
+  test "potentiate with negative power" do
+  assert Calculator.potentiate(4,-2) == 625/10000
   end
 
   test "facultation" do
