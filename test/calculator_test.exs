@@ -88,4 +88,49 @@ defmodule CalculatorTest do
        state: :input
      } = _cal} = Calculator.key(cal, "=")
   end
+
+  test "enter keys '3 - 4 =' displays '-1.0'" do
+    # Initialize the calculator into `cal`
+    {:ok,
+     %Calculator{
+       input: "",
+       display: "Welcome",
+       register: 0.0,
+       state: :input
+     } = cal} = Calculator.init()
+
+    # Press a "3"
+    {:ok,
+     %Calculator{
+       input: "3",
+       display: "3",
+       state: :input
+     } = cal} = Calculator.key(cal, "3")
+
+     {:ok,
+     %Calculator{
+       input: "-",
+       display: "3 - ",
+       register: 3.0,
+       state: :input,
+       operator: :sub
+     } = cal} = Calculator.key(cal, "-")
+
+     {:ok,
+     %Calculator{
+       input: "4",
+       display: "3 - 4",
+       register: 3.0,
+       state: :input,
+       operator: :sub
+     } = cal} = Calculator.key(cal, "4")
+     {:ok,
+     %Calculator{
+       input: "=",
+       display: "-1.0",
+       register: -1.0,
+       state: :input,
+       operator: :idle
+     } = _cal} = Calculator.key(cal, "=")
+  end
 end

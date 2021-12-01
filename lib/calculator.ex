@@ -1,6 +1,11 @@
 defmodule Calculator do
   use Debug, debug: false
 
+  @number_keys ~w/0 1 2 3 4 5 6 7 8 9 ./
+  @enter_key "="
+  @operator_keys ~w(+ -)
+  @operator_map %{"+" => :add, "-" => :sub}
+
   defstruct display: "Welcome",
             register: 0.0,
             operator: :idle,
@@ -15,7 +20,7 @@ defmodule Calculator do
         %__MODULE__{state: :input, input: input, display: display} = cal,
         num_key
       )
-      when num_key in ~w/0 1 2 3 4 5 6 7 8 9 ./ do
+      when num_key in @number_keys do
     {:ok,
      %{
        cal
@@ -28,33 +33,46 @@ defmodule Calculator do
         %__MODULE__{state: :input, input: input, display: display} = cal,
         operator_key
       )
-      when operator_key == "+" do
+      when operator_key in @operator_keys do
+    operator = Map.get(@operator_map, operator_key)
+
     {:ok,
      %{
        cal
-       | input: "+",
+       | input: operator_key,
          register: parse_input(input),
-         operator: :add,
-         display: append_key(display, " + ")
+         operator: operator,
+         display: append_key(display, " #{operator_key} ")
      }}
   end
 
   def key(
         %__MODULE__{
           state: :input,
-          operator: :add,
+          operator: operator,
           register: register,
           input: input
         } = cal,
         operator_key
       )
-      when operator_key == "=" do
-    result = register + parse_input(input)
+      when operator_key == @enter_key do
+    result =
+      case operator do
+        :add ->
+          register + parse_input(input)
+
+        :sub ->
+          register - parse_input(input)
+
+        op ->
+          IO.puts("Invalid Operator #{inspect(op)}")
+          register
+      end
 
     {:ok,
      %{
        cal
-       | input: "=",
+       | input: @enter_key,
          register: result,
          operator: :idle,
          state: :input,
@@ -83,6 +101,7 @@ defmodule Calculator do
   end
 
   defp append_input(input, num_key) do
-    "#{String.replace(input, "+", "")}#{num_key}"
+    {:ok, regex} = Regex.compile("[#{@operator_keys}]")
+    "#{String.replace(input, regex, "")}#{num_key}"
   end
 end
