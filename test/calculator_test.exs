@@ -1,53 +1,71 @@
 defmodule CalculatorTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true
 
-  @nx [4, 6]
-  @first_variable 6
-  @second_variable 4
-  test "sum up" do
-    assert Calculator.sum(@nx) == 10
+  test "%Calculator{} is a struct" do
+    {:ok, calculator} = Calculator.init()
+    assert calculator.display == "Welcome"
+    assert calculator.register == 0
+    assert calculator.operator == :idle
+    assert calculator.input == ""
+    assert calculator.state == :input
   end
 
-  test "substract" do
-    assert Calculator.sub(@nx) == -2
-  end
+  test "enter keys '1 + 11 =' displays '12'" do
+    # Initialize the calculator into `cal`
+    {:ok,
+     %Calculator{
+       input: "",
+       display: "Welcome",
+       register: 0,
+       state: :input
+     } = cal} = Calculator.init()
 
-  test "multiplicate" do
-    assert Calculator.mult(@nx) == 24
-  end
+    # Press a "1"
+    {:ok,
+     %Calculator{
+       input: "1",
+       display: "1",
+       state: :input
+     } = cal} = Calculator.key(cal, "1")
 
-  test "division" do
-    assert Calculator.div(@nx) == 2 / 3
-  end
+    # Press a "+"
+    {:ok,
+     %Calculator{
+       input: "+",
+       display: "1 + ",
+       register: 1,
+       operator: :add,
+       state: :input
+     } = cal} = Calculator.key(cal, "+")
 
-  test "square" do
-    assert Calculator.square(@first_variable) == 36
-  end
+    # Press a "1"
+    {:ok,
+     %Calculator{
+       input: "1",
+       display: "1 + 1",
+       register: 1,
+       operator: :add,
+       state: :input
+     } = cal} = Calculator.key(cal, "1")
 
-  test "reciprocal" do
-    assert Calculator.reciprocal(@first_variable) == 1 / @first_variable
-  end
+    # Press another "1"
+    {:ok,
+     %Calculator{
+       input: "11",
+       display: "1 + 11",
+       register: 1,
+       operator: :add,
+       state: :input
+     } = cal} = Calculator.key(cal, "1")
 
-  test "reciprocal with negative number" do
-    assert Calculator.reciprocal(-10) == -1/10
-  end
-
-  test "potentiate" do
-    assert Calculator.potentiate(@first_variable, @second_variable) == 1296
-  end
-  test "potentiate with negative power" do
-  assert Calculator.potentiate(4,-2) == 625/10000
-  end
-
-  test "facultation" do
-    assert Calculator.facultation(@first_variable) == 720
-  end
-
-  test "is prime number?" do
-    assert Calculator.prime_number?(13)
-  end
-
-  test "10 to the power of" do
-    assert Calculator.power_of_ten(@first_variable) == 1_000_000
+    # Press a "="
+    {:ok,
+     %Calculator{
+       input: "=",
+       display: "12",
+       register: 12,
+       operator: :idle,
+       state: :input
+     } = _cal} = Calculator.key(cal, "=")
   end
 end
