@@ -19,8 +19,8 @@ defmodule Calculator do
     {:ok,
      %{
        cal
-       | input: "#{String.replace(input, "+", "")}#{num_key}",
-         display: "#{display |> String.replace("Welcome", "")}#{num_key}"
+       | input: append_input(input, num_key),
+         display: append_key(display, num_key)
      }}
   end
 
@@ -35,7 +35,7 @@ defmodule Calculator do
        | input: "+",
          register: parse_input(input),
          operator: :add,
-         display: "#{display |> String.replace("Welcome", "")} + "
+         display: append_key(display, " + ")
      }}
   end
 
@@ -76,5 +76,13 @@ defmodule Calculator do
         IO.puts("Invalid Input #{inspect(invalid_input)}")
         ""
     end
+  end
+
+  defp append_key(display, num_key) do
+    "#{display |> String.replace("Welcome", "")}#{num_key}"
+  end
+
+  defp append_input(input, num_key) do
+    "#{String.replace(input, "+", "")}#{num_key}"
   end
 end
