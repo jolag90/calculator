@@ -16,57 +16,38 @@ defmodule Calculator do
     {:ok, %__MODULE__{}}
   end
 
-  def key(
-        %__MODULE__{state: :input, input: input, display: display} = cal,
-        num_key
-      )
-      when num_key in @number_keys do
+  def key(cal, num_key) when num_key in @number_keys do
     {:ok,
      %{
        cal
-       | input: append_input(input, num_key),
-         display: append_key(display, num_key)
+       | input: append_input(cal.input, num_key),
+         display: append_key(cal.display, num_key)
      }}
   end
 
-  def key(
-        %__MODULE__{state: :input, input: input, display: display} = cal,
-        operator_key
-      )
-      when operator_key in @operator_keys do
-    operator = Map.get(@operator_map, operator_key)
-
+  def key(cal, operator_key) when operator_key in @operator_keys do
     {:ok,
      %{
        cal
        | input: operator_key,
-         register: parse_input(input),
-         operator: operator,
-         display: append_key(display, " #{operator_key} ")
+         register: parse_input(cal.input),
+         operator: Map.get(@operator_map, operator_key),
+         display: append_key(cal.display, " #{operator_key} ")
      }}
   end
 
-  def key(
-        %__MODULE__{
-          state: :input,
-          operator: operator,
-          register: register,
-          input: input
-        } = cal,
-        operator_key
-      )
-      when operator_key == @enter_key do
+  def key(cal, operator_key) when operator_key == @enter_key do
     result =
-      case operator do
+      case cal.operator do
         :add ->
-          register + parse_input(input)
+          cal.register + parse_input(cal.input)
 
         :sub ->
-          register - parse_input(input)
+          cal.register - parse_input(cal.input)
 
         op ->
           IO.puts("Invalid Operator #{inspect(op)}")
-          register
+          cal.register
       end
 
     {:ok,
