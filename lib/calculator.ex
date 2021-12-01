@@ -2,7 +2,7 @@ defmodule Calculator do
   use Debug, debug: false
 
   defstruct display: "Welcome",
-            register: 0,
+            register: 0.0,
             operator: :idle,
             input: "",
             state: :input
@@ -15,7 +15,7 @@ defmodule Calculator do
         %__MODULE__{state: :input, input: input, display: display} = cal,
         num_key
       )
-      when num_key in ~w/0 1 2 3 4 5 6 7 8 9/ do
+      when num_key in ~w/0 1 2 3 4 5 6 7 8 9 ./ do
     {:ok,
      %{
        cal
@@ -33,7 +33,7 @@ defmodule Calculator do
      %{
        cal
        | input: "+",
-         register: String.to_integer(input),
+         register: parse_input(input),
          operator: :add,
          display: "#{display |> String.replace("Welcome", "")} + "
      }}
@@ -49,7 +49,7 @@ defmodule Calculator do
         operator_key
       )
       when operator_key == "=" do
-    result = register + String.to_integer(input)
+    result = register + parse_input(input)
 
     {:ok,
      %{
@@ -65,5 +65,16 @@ defmodule Calculator do
   def key(%__MODULE__{} = cal, key) do
     IO.puts("Invalid input '#{key}'")
     {:ok, cal}
+  end
+
+  defp parse_input(input) do
+    case Float.parse(input) do
+      {f, _} when is_number(f) ->
+        f
+
+      invalid_input ->
+        IO.puts("Invalid Input #{inspect(invalid_input)}")
+        ""
+    end
   end
 end
