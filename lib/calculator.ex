@@ -3,8 +3,8 @@ defmodule Calculator do
 
   @number_keys ~w/0 1 2 3 4 5 6 7 8 9 ./
   @enter_key "="
-  @operator_keys ~w(+ -)
-  @operator_map %{"+" => :add, "-" => :sub}
+  @operator_keys ~w(+ * / -)
+  @operator_map %{"+" => :add, "-" => :sub, "*" => :mul, "/" => :div}
 
   defstruct display: "Welcome",
             register: 0.0,
@@ -37,18 +37,7 @@ defmodule Calculator do
   end
 
   def key(cal, operator_key) when operator_key == @enter_key do
-    result =
-      case cal.operator do
-        :add ->
-          cal.register + parse_input(cal.input)
-
-        :sub ->
-          cal.register - parse_input(cal.input)
-
-        op ->
-          IO.puts("Invalid Operator #{inspect(op)}")
-          cal.register
-      end
+    result = calculate(cal.operator, cal.register, cal.input)
 
     {:ok,
      %{
@@ -84,5 +73,25 @@ defmodule Calculator do
   defp append_input(input, num_key) do
     {:ok, regex} = Regex.compile("[#{@operator_keys}]")
     "#{String.replace(input, regex, "")}#{num_key}"
+  end
+
+  defp calculate(operator, register, input) when operator == :add do
+    register + parse_input(input)
+  end
+
+  defp calculate(operator, register, input) when operator == :sub do
+    register - parse_input(input)
+  end
+
+  defp calculate(operator, register, input) when operator == :mul do
+    register * parse_input(input)
+  end
+
+  defp calculate(operator, register, input) when operator == :div do
+    register / parse_input(input)
+  end
+
+  defp calculate(operator, _, _) when operator not in @operator_keys do
+    IO.puts("Invalid Operator: #{operator}")
   end
 end

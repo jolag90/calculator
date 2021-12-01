@@ -99,7 +99,6 @@ defmodule CalculatorTest do
        state: :input
      } = cal} = Calculator.init()
 
-    # Press a "3"
     {:ok,
      %Calculator{
        input: "3",
@@ -107,7 +106,7 @@ defmodule CalculatorTest do
        state: :input
      } = cal} = Calculator.key(cal, "3")
 
-     {:ok,
+    {:ok,
      %Calculator{
        input: "-",
        display: "3 - ",
@@ -116,7 +115,7 @@ defmodule CalculatorTest do
        operator: :sub
      } = cal} = Calculator.key(cal, "-")
 
-     {:ok,
+    {:ok,
      %Calculator{
        input: "4",
        display: "3 - 4",
@@ -124,11 +123,100 @@ defmodule CalculatorTest do
        state: :input,
        operator: :sub
      } = cal} = Calculator.key(cal, "4")
-     {:ok,
+
+    {:ok,
      %Calculator{
        input: "=",
        display: "-1.0",
        register: -1.0,
+       state: :input,
+       operator: :idle
+     } = _cal} = Calculator.key(cal, "=")
+  end
+
+  test "enter keys '5 * 2 =' displays '10.0'" do
+    {:ok,
+     %Calculator{
+       input: "",
+       display: "Welcome",
+       register: 0.0,
+       state: :input
+     } = cal} = Calculator.init()
+
+    {:ok,
+     %Calculator{
+       input: "5",
+       display: "5",
+       state: :input
+     } = cal} = Calculator.key(cal, "5")
+
+    {:ok,
+     %Calculator{
+       input: "*",
+       display: "5 * ",
+       register: 5.0,
+       state: :input,
+       operator: :mul
+     } = cal} = Calculator.key(cal, "*")
+
+    {:ok,
+     %Calculator{
+       input: "2",
+       display: "5 * 2",
+       register: 5.0,
+       state: :input,
+       operator: :mul
+     } = cal} = Calculator.key(cal, "2")
+
+    {:ok,
+     %Calculator{
+       input: "=",
+       display: "10.0",
+       register: 10.0,
+       state: :input,
+       operator: :idle
+     } = _cal} = Calculator.key(cal, "=")
+  end
+
+  test "enter keys '5 / 2 =' displays '2.5'" do
+    {:ok,
+     %Calculator{
+       input: "",
+       display: "Welcome",
+       register: 0.0,
+       state: :input
+     } = cal} = Calculator.init()
+
+    {:ok,
+     %Calculator{
+       input: "5",
+       display: "5",
+       state: :input
+     } = cal} = Calculator.key(cal, "5")
+
+    {:ok,
+     %Calculator{
+       input: "/",
+       display: "5 / ",
+       register: 5.0,
+       state: :input,
+       operator: :div
+     } = cal} = Calculator.key(cal, "/")
+
+    {:ok,
+     %Calculator{
+       input: "2",
+       display: "5 / 2",
+       register: 5.0,
+       state: :input,
+       operator: :div
+     } = cal} = Calculator.key(cal, "2")
+
+    {:ok,
+     %Calculator{
+       input: "=",
+       display: "2.5",
+       register: 2.5,
        state: :input,
        operator: :idle
      } = _cal} = Calculator.key(cal, "=")
