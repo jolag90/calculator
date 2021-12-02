@@ -5,18 +5,23 @@ defmodule Calculator do
   @enter_key "="
   @operator_keys ~w(+ * / -)
   @operator_map %{"+" => :add, "-" => :sub, "*" => :mul, "/" => :div}
+  @state1 :input_reg_1
+  @state2 :input_operator
+  @state3 :input_reg_2
 
   defstruct display: "Welcome",
             register: 0.0,
             operator: :idle,
             input: "",
-            state: :input
+            state: @state1
 
   def init() do
     {:ok, %__MODULE__{}}
   end
 
-  def key(cal, num_key) when num_key in @number_keys do
+  def key(cal, key_pressed)
+
+  def key(cal, num_key) when num_key in @number_keys and cal.state in [@state1, @state3] do
     {:ok,
      %{
        cal
@@ -25,12 +30,12 @@ defmodule Calculator do
      }}
   end
 
-  def key(cal, operator_key) when operator_key in @operator_keys do
+  def key(cal, operator_key) when operator_key in @operator_keys and cal.state == @state1 do
     {:ok,
      %{
        cal
        | input: operator_key,
-         register: parse_input(cal.input),
+         register: parse_input(cal.input) || 0,
          operator: Map.get(@operator_map, operator_key),
          display: append_key(cal.display, " #{operator_key} ")
      }}
@@ -45,14 +50,22 @@ defmodule Calculator do
        | input: @enter_key,
          register: result,
          operator: :idle,
-         state: :input,
+         state: @state1,
          display: "#{result}"
      }}
   end
 
-  def key(%__MODULE__{} = cal, key) do
-    IO.puts("Invalid input '#{key}'")
-    {:ok, cal}
+  def key(%__MODULE__{}, _) do
+    {:ok,
+     %{
+       reset()
+       | display: "Error",
+         state: :error
+     }}
+  end
+
+  defp reset do
+    %__MODULE__{}
   end
 
   defp parse_input(input) do
@@ -61,8 +74,8 @@ defmodule Calculator do
         f
 
       invalid_input ->
-        IO.puts("Invalid Input #{inspect(invalid_input)}")
-        ""
+        debug("Invalid Input #{inspect(invalid_input)}")
+        nil
     end
   end
 
@@ -71,27 +84,44 @@ defmodule Calculator do
   end
 
   defp append_input(input, num_key) do
-    {:ok, regex} = Regex.compile("[#{@operator_keys}]")
-    "#{String.replace(input, regex, "")}#{num_key}"
+    remove_chars(input) <> num_key
+  end
+
+  defp remove_chars(input) do
+    value = String.split(input, "")
+
+    Enum.reduce(value, [], fn ops, acc ->
+      append_if_not_operator(acc, ops)
+    end)
+    |> Enum.join()
+  end
+
+  defp append_if_not_operator(acc, ops) when ops not in @operator_keys do
+    acc ++ [ops]
+  end
+
+  defp append_if_not_operator(acc, _) do
+    acc
   end
 
   defp calculate(operator, register, input) when operator == :add do
-    register + parse_input(input)
+    register + (parse_input(input) || 0)
   end
 
   defp calculate(operator, register, input) when operator == :sub do
-    register - parse_input(input)
+    register - (parse_input(input) || 0)
   end
 
   defp calculate(operator, register, input) when operator == :mul do
-    register * parse_input(input)
+    register * (parse_input(input) || 1)
   end
 
   defp calculate(operator, register, input) when operator == :div do
-    register / parse_input(input)
+    register / (parse_input(input) || 1)
   end
 
   defp calculate(operator, _, _) when operator not in @operator_keys do
     IO.puts("Invalid Operator: #{operator}")
+    nil
   end
 end
