@@ -3,8 +3,16 @@ defmodule Calculator do
 
   @number_keys ~w/0 1 2 3 4 5 6 7 8 9 ./
   @enter_key "="
-  @operator_keys ~w(+ * / -)
-  @operator_map %{"+" => :add, "-" => :sub, "*" => :mul, "/" => :div}
+  @delete_keys ~w/u c/ #u for undo last input c for clear
+  @operator_keys ~w(+ * / % -)
+  @operator_map %{
+    "+" => :add,
+    "-" => :sub,
+    "*" => :mul,
+    "/" => :div,
+    "%" => :proc
+  }
+  @operator_delete_map %{"u" => :undo, "c" => :clear}
 
   defstruct display: "Welcome",
             register: 0.0,
@@ -33,6 +41,17 @@ defmodule Calculator do
          register: parse_input(cal.input),
          operator: Map.get(@operator_map, operator_key),
          display: append_key(cal.display, " #{operator_key} ")
+     }}
+  end
+
+  def key(cal, operator_key) when operator_key in @delete_keys do
+    {:ok,
+     %{
+       cal
+       | input: operator_key,
+         register: parse_input(cal.input),
+         operator: Map.get(@operator_delete_map, operator_key),
+        # display: delete_last_input(cal.display, cal.register)
      }}
   end
 
@@ -75,6 +94,8 @@ defmodule Calculator do
     "#{String.replace(input, regex, "")}#{num_key}"
   end
 
+
+
   defp calculate(operator, register, input) when operator == :add do
     register + parse_input(input)
   end
@@ -89,6 +110,10 @@ defmodule Calculator do
 
   defp calculate(operator, register, input) when operator == :div do
     register / parse_input(input)
+  end
+
+  defp calculate(operator, register, input) when operator == :proc do
+    register * (1 + parse_input(input) / 100)
   end
 
   defp calculate(operator, _, _) when operator not in @operator_keys do

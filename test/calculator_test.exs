@@ -221,4 +221,81 @@ defmodule CalculatorTest do
        operator: :idle
      } = _cal} = Calculator.key(cal, "=")
   end
+
+  test "enter keys '5 % 2 =' displays '5.10'" do
+    {:ok,
+     %Calculator{
+       input: "",
+       display: "Welcome",
+       register: 0.0,
+       state: :input
+     } = cal} = Calculator.init()
+
+    {:ok,
+     %Calculator{
+       input: "5",
+       display: "5",
+       state: :input
+     } = cal} = Calculator.key(cal, "5")
+
+    {:ok,
+     %Calculator{
+       input: "%",
+       display: "5 % ",
+       register: 5.0,
+       state: :input,
+       operator: :proc
+     } = cal} = Calculator.key(cal, "%")
+
+    {:ok,
+     %Calculator{
+       input: "2",
+       display: "5 % 2",
+       register: 5.0,
+       state: :input,
+       operator: :proc
+     } = cal} = Calculator.key(cal, "2")
+
+    {:ok,
+     %Calculator{
+       input: "=",
+       display: "5.1",
+       register: 5.1,
+       state: :input,
+       operator: :idle
+     } = _cal} = Calculator.key(cal, "=")
+  end
+
+  test "delet the last entrance" do
+    {:ok,
+     %Calculator{
+       input: "",
+       display: "Welcome",
+       register: 0.0,
+       state: :input
+     } = cal} = Calculator.init()
+
+     {:ok,
+     %Calculator{
+       input: "5",
+       display: "5",
+       state: :input
+     } = cal} = Calculator.key(cal, "5")
+     {:ok,
+     %Calculator{
+       input: "55",
+       display: "55",
+       register: 0.0,
+       state: :input
+     } = cal} = Calculator.key(cal, "5")
+
+    {:ok,
+     %Calculator{
+       input: "u",
+       display: "5",
+       register: 5.0,
+       state: :input,
+       operator: :undo
+     } = _cal} = Calculator.key(cal, "u")
+  end
 end
