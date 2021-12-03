@@ -217,7 +217,6 @@ defmodule CalculatorTest do
        } = _cal} = Calculator.key(cal, "w")
     end
 
-    @tag :skip
     test "unexpected key pressed" do
       {:ok,
        %Calculator{
@@ -232,7 +231,7 @@ defmodule CalculatorTest do
          display: "Error",
          state: :error,
          register: 0.0
-       } = cal} = Calculator.key(cal, "*")
+       } = _cal} = Calculator.key(cal, "*")
     end
   end
 end

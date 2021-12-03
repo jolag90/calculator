@@ -13,7 +13,8 @@ defmodule Calculator do
             register: 0.0,
             operator: :idle,
             input: "",
-            state: @state1
+            state: @state1,
+            initial_input: 0
 
   def init() do
     {:ok, %__MODULE__{}}
@@ -26,18 +27,20 @@ defmodule Calculator do
      %{
        cal
        | input: append_input(cal.input, num_key),
-         display: append_key(cal.display, num_key)
+         display: append_key(cal.display, num_key),
+         initial_input: "true"
      }}
   end
 
-  def key(cal, operator_key) when operator_key in @operator_keys and cal.state == @state1 do
+  def key(cal, operator_key) when operator_key in @operator_keys and cal.state == @state1 and cal.initial_input == "true" do
     {:ok,
      %{
        cal
        | input: operator_key,
          register: parse_input(cal.input) || 0,
          operator: Map.get(@operator_map, operator_key),
-         display: append_key(cal.display, " #{operator_key} ")
+         display: append_key(cal.display, " #{operator_key} "),
+
      }}
   end
 
