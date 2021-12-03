@@ -5,34 +5,36 @@ defmodule Calculator do
   @enter_key "="
   @operator_keys ~w(+ * / -)
   @operator_map %{"+" => :add, "-" => :sub, "*" => :mul, "/" => :div}
-  @state1 :input_reg_1
+  @state1 :input_reg
   @state2 :input_operator
-  @state3 :input_reg_2
 
   defstruct display: "Welcome",
             register: 0.0,
             operator: :idle,
             input: "",
             state: @state1,
-            initial_input: 0
+            got_number?: false
 
   def init() do
     {:ok, %__MODULE__{}}
   end
 
   def key(cal, key_pressed)
-
-  def key(cal, num_key) when num_key in @number_keys and cal.state in [@state1, @state3] do
+  # if a num_key was pressed enter here
+  def key(cal, num_key) when num_key in @number_keys do
     {:ok,
      %{
        cal
        | input: append_input(cal.input, num_key),
          display: append_key(cal.display, num_key),
-         initial_input: "true"
+         got_number?: true,
+         state: @state1
      }}
   end
 
-  def key(cal, operator_key) when operator_key in @operator_keys and cal.state == @state1 and cal.initial_input == "true" do
+  # if an operator_key was pressed: check if a num_key was pressed before
+  def key(cal, operator_key)
+      when operator_key in @operator_keys and cal.got_number? and cal.state != @state2 do
     {:ok,
      %{
        cal
@@ -40,10 +42,11 @@ defmodule Calculator do
          register: parse_input(cal.input) || 0,
          operator: Map.get(@operator_map, operator_key),
          display: append_key(cal.display, " #{operator_key} "),
-
+         state: @state2
      }}
   end
 
+  # when enter was pressed calculate
   def key(cal, operator_key) when operator_key == @enter_key do
     result = calculate(cal.operator, cal.register, cal.input)
 
@@ -58,6 +61,7 @@ defmodule Calculator do
      }}
   end
 
+  # if nothing defined was pressed show an error
   def key(%__MODULE__{}, _) do
     {:ok,
      %{
@@ -71,6 +75,7 @@ defmodule Calculator do
     %__MODULE__{}
   end
 
+  # to convert strings into floats from register(for calculation purpose)
   defp parse_input(input) do
     case Float.parse(input) do
       {f, _} when is_number(f) ->
@@ -82,10 +87,12 @@ defmodule Calculator do
     end
   end
 
+  # to insert the input on the display (&remove "welcome")
   defp append_key(display, num_key) do
     "#{display |> String.replace("Welcome", "")}#{num_key}"
   end
 
+  # add a single input after another
   defp append_input(input, num_key) do
     remove_chars(input) <> num_key
   end
@@ -107,7 +114,10 @@ defmodule Calculator do
     acc
   end
 
+  # basic calculations (+-*/)
+  #######################################################################
   defp calculate(operator, register, input) when operator == :add do
+    # 0 for addition an subtraction, to not change value
     register + (parse_input(input) || 0)
   end
 
@@ -116,6 +126,7 @@ defmodule Calculator do
   end
 
   defp calculate(operator, register, input) when operator == :mul do
+    # 1 for multiplication an division, to not change value
     register * (parse_input(input) || 1)
   end
 
@@ -123,6 +134,9 @@ defmodule Calculator do
     register / (parse_input(input) || 1)
   end
 
+  #######################################################################
+
+  # error if operator doesnt match with the system
   defp calculate(operator, _, _) when operator not in @operator_keys do
     IO.puts("Invalid Operator: #{operator}")
     nil

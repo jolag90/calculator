@@ -1,6 +1,7 @@
 defmodule CalculatorTest do
   use ExUnit.Case, async: true
 
+  # test basic operations (+-*/)
   describe "basics" do
     test "%Calculator{} is a struct" do
       {:ok, calculator} = Calculator.init()
@@ -10,6 +11,7 @@ defmodule CalculatorTest do
       assert calculator.input == ""
     end
 
+    # test documented in detail as example
     test "enter keys '1 + 11.1 =' displays '12.1'" do
       # Initialize the calculator into `cal`
       {:ok,
@@ -82,7 +84,6 @@ defmodule CalculatorTest do
     end
 
     test "enter keys '3 - 4 =' displays '-1.0'" do
-      # Initialize the calculator into `cal`
       {:ok,
        %Calculator{
          input: "",
@@ -200,6 +201,7 @@ defmodule CalculatorTest do
     end
   end
 
+  # test for errors
   describe "error handling" do
     test "unknown key pressed" do
       {:ok,
@@ -209,7 +211,6 @@ defmodule CalculatorTest do
          register: 0.0
        } = cal} = Calculator.init()
 
-      # press w
       {:ok,
        %Calculator{
          input: "",
@@ -217,6 +218,7 @@ defmodule CalculatorTest do
        } = _cal} = Calculator.key(cal, "w")
     end
 
+    # first input cannot be an operator
     test "unexpected key pressed" do
       {:ok,
        %Calculator{
@@ -231,6 +233,39 @@ defmodule CalculatorTest do
          display: "Error",
          state: :error,
          register: 0.0
+       } = _cal} = Calculator.key(cal, "*")
+    end
+
+    # cannot deal with 2 opperators after each other
+    test "2 time opperator pressed" do
+      {:ok,
+       %Calculator{
+         input: "",
+         display: "Welcome",
+         register: 0.0
+       } = cal} = Calculator.init()
+
+      {:ok,
+       %Calculator{
+         input: "5",
+         display: "5"
+       } = cal} = Calculator.key(cal, "5")
+
+      {:ok,
+       %Calculator{
+         input: "/",
+         display: "5 / ",
+         register: 5.0,
+         operator: :div
+       } = cal} = Calculator.key(cal, "/")
+
+      {:ok,
+       %Calculator{
+         input: "",
+         display: "Error",
+         register: 0.0,
+         operator: :idle,
+         state: :error
        } = _cal} = Calculator.key(cal, "*")
     end
   end
