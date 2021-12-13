@@ -3,6 +3,7 @@ defmodule Calculator do
 
   @number_keys ~w/0 1 2 3 4 5 6 7 8 9 ./
   @enter_key "="
+  @quit_key "q"
   @operator_keys ~w(+ * / -)
   @operator_map %{"+" => :add, "-" => :sub, "*" => :mul, "/" => :div}
   @state1 :input_register
@@ -25,6 +26,10 @@ defmodule Calculator do
   end
 
   ######################################################################
+
+  defp handle_key(cal, operator_key) when operator_key == @quit_key do
+    {:quit, cal}
+  end
 
   # match if a num_key was pressed. Appends the new key to display and input
   defp handle_key(cal, num_key) when num_key in @number_keys do
@@ -99,7 +104,13 @@ defmodule Calculator do
 
   # to insert the input on the display (&remove "welcome")
   defp append_key(display, num_key) do
-    "#{display |> String.replace("Welcome", "")}#{num_key}"
+    "#{remove_messages(display)}#{num_key}"
+  end
+
+  defp remove_messages(display) do
+    display
+    |> String.replace("Welcome", "")
+    |> String.replace("Error", "")
   end
 
   # add a single input after another
