@@ -5,9 +5,10 @@ defmodule Calculator do
   @enter_key "="
   @operator_keys ~w(+ * / -)
   @operator_map %{"+" => :add, "-" => :sub, "*" => :mul, "/" => :div}
-  @state1 :input_reg
+  @state1 :input_register
   @state2 :input_operator
 
+  # FIXME: :got_number? shouldn't be visible in Calculator's API
   defstruct display: "Welcome",
             register: 0.0,
             operator: :idle,
@@ -19,9 +20,14 @@ defmodule Calculator do
     {:ok, %__MODULE__{}}
   end
 
-  def key(cal, key_pressed)
-  # if a num_key was pressed enter here
-  def key(cal, num_key) when num_key in @number_keys do
+  def key(cal, key_pressed) do
+    handle_key(cal, key_pressed)
+  end
+
+  ######################################################################
+
+  # match if a num_key was pressed. Appends the new key to display and input
+  defp handle_key(cal, num_key) when num_key in @number_keys do
     {:ok,
      %{
        cal
@@ -32,9 +38,12 @@ defmodule Calculator do
      }}
   end
 
-  # if an operator_key was pressed: check if a num_key was pressed before
-  def key(cal, operator_key)
-      when operator_key in @operator_keys and cal.got_number? and cal.state != @state2 do
+  # match operator_key if any number was entered before.
+  # parse number from input into register
+  # sets operator and input
+  # appends key to display
+  defp handle_key(cal, operator_key)
+       when operator_key in @operator_keys and cal.got_number? and cal.state != @state2 do
     {:ok,
      %{
        cal
@@ -47,7 +56,8 @@ defmodule Calculator do
   end
 
   # when enter was pressed calculate
-  def key(cal, operator_key) when operator_key == @enter_key do
+  # - set result to display and reset all other fields
+  defp handle_key(cal, operator_key) when operator_key == @enter_key do
     result = calculate(cal.operator, cal.register, cal.input)
 
     {:ok,
@@ -61,8 +71,8 @@ defmodule Calculator do
      }}
   end
 
-  # if nothing defined was pressed show an error
-  def key(%__MODULE__{}, _) do
+  # catch all - reset and display error
+  defp handle_key(%__MODULE__{}, _) do
     {:ok,
      %{
        reset()

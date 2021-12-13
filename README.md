@@ -5,15 +5,9 @@ and plan to build a CLI and a web interface (Phoenix, Liveview maybe).
 
 Stay tuned and feel free to collaborate if you too being on your track of learn programming with Elixir ;-)
 
-## Usage
 
-For now, just check out this repository in a sibling path to your mix-project and use it in `mix.exs` in
-`deps()` as a local dependency.
+## Next steps
 
-```elixir
-def deps do
-  [
-    {:calculator, path: "../calculator" }
-  ]
-end
-```
+- [ ] Calculator.CLI
+
+
