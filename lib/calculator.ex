@@ -1,165 +1,95 @@
 defmodule Calculator do
-  use Debug, debug: false
+  use GenServer
 
   @number_keys ~w/0 1 2 3 4 5 6 7 8 9 ./
+  @operator_keys ~w|+ * / d r -|
   @enter_key "="
-  @quit_key "q"
-  @operator_keys ~w(+ * / -)
-  @operator_map %{"+" => :add, "-" => :sub, "*" => :mul, "/" => :div}
-  @state1 :input_register
-  @state2 :input_operator
 
-  # FIXME: :got_number? shouldn't be visible in Calculator's API
-  defstruct display: "Welcome",
-            register: 0.0,
-            operator: :idle,
-            input: "",
-            state: @state1,
-            got_number?: false
+  defstruct display: "Welcome!"
 
-  def init() do
-    {:ok, %__MODULE__{}}
+  ## API
+
+  @doc """
+  Starts a new calculator process.
+  Returns `{:ok, pid}` or an error.
+  """
+  def start_link(), do: GenServer.start_link(__MODULE__, %__MODULE__{})
+
+  @doc """
+  Stops the server/calculator with the given `pid`
+  """
+  def stop(pid), do: GenServer.stop(pid, :normal)
+
+  @doc """
+  Get the current display as a string
+  """
+  def display(pid), do: GenServer.call(pid, :display)
+
+  @doc """
+  Press a key
+  """
+  def press_key(pid, ch) when is_binary(ch) do
+    GenServer.cast(pid, {:press_key, ch})
   end
 
-  def key(cal, key_pressed) do
-    handle_key(cal, key_pressed)
+  ## GenServer implementation
+
+  @impl true
+  def init(calculator), do: {:ok, calculator}
+
+  ## GenServer Callbacks
+
+  @impl true
+  def handle_call(:display, _, calculator) do
+    {:reply, calculator.display, calculator}
   end
 
-  ######################################################################
-
-  defp handle_key(cal, operator_key) when operator_key == @quit_key do
-    {:quit, cal}
+  @impl true
+  def handle_cast({:press_key, ch}, calculator) when ch in @number_keys do
+    {:noreply, %{calculator | display: remove_messages(calculator).display <> ch}}
   end
 
-  # match if a num_key was pressed. Appends the new key to display and input
-  defp handle_key(cal, num_key) when num_key in @number_keys do
-    {:ok,
-     %{
-       cal
-       | input: append_input(cal.input, num_key),
-         display: append_key(cal.display, num_key),
-         got_number?: true,
-         state: @state1
-     }}
+  @impl true
+  def handle_cast({:press_key, ch}, calculator) when ch in @operator_keys do
+    {f, _} = Float.parse(calculator.display)
+    {:noreply, %{calculator | display: "#{f}#{ch}"}}
   end
 
-  # match operator_key if any number was entered before.
-  # parse number from input into register
-  # sets operator and input
-  # appends key to display
-  defp handle_key(cal, operator_key)
-       when operator_key in @operator_keys and cal.got_number? and cal.state != @state2 do
-    {:ok,
-     %{
-       cal
-       | input: operator_key,
-         register: parse_input(cal.input) || 0,
-         operator: Map.get(@operator_map, operator_key),
-         display: append_key(cal.display, " #{operator_key} "),
-         state: @state2
-     }}
+  @impl true
+  def handle_cast({:press_key, @enter_key}, calculator) do
+    result =
+      Float.parse(calculator.display)
+      |> calculate()
+
+    {:noreply, %{calculator | display: "#{result}"}}
   end
 
-  # when enter was pressed calculate
-  # - set result to display and reset all other fields
-  defp handle_key(cal, operator_key) when operator_key == @enter_key do
-    result = calculate(cal.operator, cal.register, cal.input)
-
-    {:ok,
-     %{
-       cal
-       | input: @enter_key,
-         register: result,
-         operator: :idle,
-         state: @state1,
-         display: "#{result}"
-     }}
+  @impl true
+  def handle_cast({:press_key, _ignored_key}, calculator) do
+    {:noreply, calculator}
   end
 
-  # catch all - reset and display error
-  defp handle_key(%__MODULE__{}, _) do
-    {:ok,
-     %{
-       reset()
-       | display: "Error",
-         state: :error
-     }}
+  ## Helpers
+  defp remove_messages(calculator) do
+    %{calculator | display: String.replace(calculator.display, "Welcome!", "")}
   end
 
-  defp reset do
-    %__MODULE__{}
-  end
+  defp calculate({a, "+" <> b_str}), do: calculation(a, b_str, fn ^a, b -> a + b end)
 
-  # to convert strings into floats from register(for calculation purpose)
-  defp parse_input(input) do
-    case Float.parse(input) do
-      {f, _} when is_number(f) ->
-        f
+  defp calculate({a, "-" <> b_str}), do: calculation(a, b_str, fn ^a, b -> a - b end)
 
-      invalid_input ->
-        debug("Invalid Input #{inspect(invalid_input)}")
-        nil
-    end
-  end
+  defp calculate({a, "/" <> b_str}), do: calculation(a, b_str, fn ^a, b -> a / b end)
 
-  # to insert the input on the display (&remove "welcome")
-  defp append_key(display, num_key) do
-    "#{remove_messages(display)}#{num_key}"
-  end
+  defp calculate({a, "*" <> b_str}), do: calculation(a, b_str, fn ^a, b -> a * b end)
 
-  defp remove_messages(display) do
-    display
-    |> String.replace("Welcome", "")
-    |> String.replace("Error", "")
-  end
+  defp calculate({a, "d" <> b_str}),
+    do: calculation(a, b_str, fn ^a, b -> div(floor(a), floor(b)) end)
 
-  # add a single input after another
-  defp append_input(input, num_key) do
-    remove_chars(input) <> num_key
-  end
+  defp calculate({a, "r" <> b_str}),
+    do: calculation(a, b_str, fn ^a, b -> rem(floor(a), floor(b)) end)
 
-  defp remove_chars(input) do
-    value = String.split(input, "")
-
-    Enum.reduce(value, [], fn ops, acc ->
-      append_if_not_operator(acc, ops)
-    end)
-    |> Enum.join()
-  end
-
-  defp append_if_not_operator(acc, ops) when ops not in @operator_keys do
-    acc ++ [ops]
-  end
-
-  defp append_if_not_operator(acc, _) do
-    acc
-  end
-
-  # basic calculations (+-*/)
-  #######################################################################
-  defp calculate(operator, register, input) when operator == :add do
-    # 0 for addition an subtraction, to not change value
-    register + (parse_input(input) || 0)
-  end
-
-  defp calculate(operator, register, input) when operator == :sub do
-    register - (parse_input(input) || 0)
-  end
-
-  defp calculate(operator, register, input) when operator == :mul do
-    # 1 for multiplication an division, to not change value
-    register * (parse_input(input) || 1)
-  end
-
-  defp calculate(operator, register, input) when operator == :div do
-    register / (parse_input(input) || 1)
-  end
-
-  #######################################################################
-
-  # error if operator doesnt match with the system
-  defp calculate(operator, _, _) when operator not in @operator_keys do
-    IO.puts("Invalid Operator: #{operator}")
-    nil
+  defp calculation(a, b_str, fun) do
+    {b, ""} = Float.parse(b_str)
+    fun.(a, b)
   end
 end

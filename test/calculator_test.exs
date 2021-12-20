@@ -1,272 +1,89 @@
 defmodule CalculatorTest do
   use ExUnit.Case, async: true
 
-  # test basic operations (+-*/)
   describe "basics" do
-    test "%Calculator{} is a struct" do
-      {:ok, calculator} = Calculator.init()
-      assert calculator.display == "Welcome"
-      assert calculator.register == 0.0
-      assert calculator.operator == :idle
-      assert calculator.input == ""
+    test ".start_link/0 .stop/1" do
+      # Starting
+      {:ok, pid} = Calculator.start_link()
+      assert is_pid(pid)
+
+      # Stopping
+      assert Process.alive?(pid)
+      Calculator.stop(pid)
+      refute Process.alive?(pid)
     end
 
-    # test documented in detail as example
-    test "enter keys '1 + 11.1 =' displays '12.1'" do
-      # Initialize the calculator into `cal`
-      {:ok,
-       %Calculator{
-         input: "",
-         display: "Welcome",
-         register: 0.0
-       } = cal} = Calculator.init()
-
-      # Press a "1"
-      {:ok,
-       %Calculator{
-         input: "1",
-         display: "1"
-       } = cal} = Calculator.key(cal, "1")
-
-      # Press a "+"
-      {:ok,
-       %Calculator{
-         input: "+",
-         display: "1 + ",
-         register: 1.0,
-         operator: :add
-       } = cal} = Calculator.key(cal, "+")
-
-      # Press a "1"
-      {:ok,
-       %Calculator{
-         input: "1",
-         display: "1 + 1",
-         register: 1.0,
-         operator: :add
-       } = cal} = Calculator.key(cal, "1")
-
-      # Press another "1"
-      {:ok,
-       %Calculator{
-         input: "11",
-         display: "1 + 11",
-         register: 1.0,
-         operator: :add
-       } = cal} = Calculator.key(cal, "1")
-
-      # Press "."
-      {:ok,
-       %Calculator{
-         input: "11.",
-         display: "1 + 11.",
-         register: 1.0,
-         operator: :add
-       } = cal} = Calculator.key(cal, ".")
-
-      # Press another "1"
-      {:ok,
-       %Calculator{
-         input: "11.1",
-         display: "1 + 11.1",
-         register: 1.0,
-         operator: :add
-       } = cal} = Calculator.key(cal, "1")
-
-      # Press a "="
-      {:ok,
-       %Calculator{
-         input: "=",
-         display: "12.1",
-         register: 12.1,
-         operator: :idle
-       } = _cal} = Calculator.key(cal, "=")
+    test "newly started calculator displays 'Welcome!'" do
+      {:ok, cal} = Calculator.start_link()
+      assert Calculator.display(cal) == "Welcome!"
     end
 
-    test "enter keys '3 - 4 =' displays '-1.0'" do
-      {:ok,
-       %Calculator{
-         input: "",
-         display: "Welcome",
-         register: 0.0
-       } = cal} = Calculator.init()
-
-      {:ok,
-       %Calculator{
-         input: "3",
-         display: "3"
-       } = cal} = Calculator.key(cal, "3")
-
-      {:ok,
-       %Calculator{
-         input: "-",
-         display: "3 - ",
-         register: 3.0,
-         operator: :sub
-       } = cal} = Calculator.key(cal, "-")
-
-      {:ok,
-       %Calculator{
-         input: "4",
-         display: "3 - 4",
-         register: 3.0,
-         operator: :sub
-       } = cal} = Calculator.key(cal, "4")
-
-      {:ok,
-       %Calculator{
-         input: "=",
-         display: "-1.0",
-         register: -1.0,
-         operator: :idle
-       } = _cal} = Calculator.key(cal, "=")
-    end
-
-    test "enter keys '5 * 2 =' displays '10.0'" do
-      {:ok,
-       %Calculator{
-         input: "",
-         display: "Welcome",
-         register: 0.0
-       } = cal} = Calculator.init()
-
-      {:ok,
-       %Calculator{
-         input: "5",
-         display: "5"
-       } = cal} = Calculator.key(cal, "5")
-
-      {:ok,
-       %Calculator{
-         input: "*",
-         display: "5 * ",
-         register: 5.0,
-         operator: :mul
-       } = cal} = Calculator.key(cal, "*")
-
-      {:ok,
-       %Calculator{
-         input: "2",
-         display: "5 * 2",
-         register: 5.0,
-         operator: :mul
-       } = cal} = Calculator.key(cal, "2")
-
-      {:ok,
-       %Calculator{
-         input: "=",
-         display: "10.0",
-         register: 10.0,
-         operator: :idle
-       } = _cal} = Calculator.key(cal, "=")
-    end
-
-    test "enter keys '5 / 2 =' displays '2.5'" do
-      {:ok,
-       %Calculator{
-         input: "",
-         display: "Welcome",
-         register: 0.0
-       } = cal} = Calculator.init()
-
-      {:ok,
-       %Calculator{
-         input: "5",
-         display: "5"
-       } = cal} = Calculator.key(cal, "5")
-
-      {:ok,
-       %Calculator{
-         input: "/",
-         display: "5 / ",
-         register: 5.0,
-         operator: :div
-       } = cal} = Calculator.key(cal, "/")
-
-      {:ok,
-       %Calculator{
-         input: "2",
-         display: "5 / 2",
-         register: 5.0,
-         operator: :div
-       } = cal} = Calculator.key(cal, "2")
-
-      {:ok,
-       %Calculator{
-         input: "=",
-         display: "2.5",
-         register: 2.5,
-         operator: :idle
-       } = _cal} = Calculator.key(cal, "=")
+    test "press number keys shows the number in display" do
+      {:ok, cal} = Calculator.start_link()
+      press_keys(cal, "123")
+      assert Calculator.display(cal) == "123"
     end
   end
 
-  # test for errors
-  describe "error handling" do
-    test "unknown key pressed" do
-      {:ok,
-       %Calculator{
-         input: "",
-         display: "Welcome",
-         register: 0.0
-       } = cal} = Calculator.init()
-
-      {:ok,
-       %Calculator{
-         input: "",
-         display: "Error"
-       } = _cal} = Calculator.key(cal, "w")
+  describe "simple calculations" do
+    setup _ do
+      {:ok, pid} = Calculator.start_link()
+      {:ok, %{cal: pid}}
     end
 
-    # first input cannot be an operator
-    test "unexpected key pressed" do
-      {:ok,
-       %Calculator{
-         input: "",
-         display: "Welcome",
-         register: 0.0
-       } = cal} = Calculator.init()
-
-      {:ok,
-       %Calculator{
-         input: "",
-         display: "Error",
-         state: :error,
-         register: 0.0
-       } = _cal} = Calculator.key(cal, "*")
+    test "enter number followed by a valid operator key", %{cal: cal} do
+      press_keys(cal, "123")
+      Calculator.press_key(cal, "+")
+      assert Calculator.display(cal) == "123.0+"
     end
 
-    # cannot deal with 2 opperators after each other
-    test "2 time opperator pressed" do
-      {:ok,
-       %Calculator{
-         input: "",
-         display: "Welcome",
-         register: 0.0
-       } = cal} = Calculator.init()
-
-      {:ok,
-       %Calculator{
-         input: "5",
-         display: "5"
-       } = cal} = Calculator.key(cal, "5")
-
-      {:ok,
-       %Calculator{
-         input: "/",
-         display: "5 / ",
-         register: 5.0,
-         operator: :div
-       } = cal} = Calculator.key(cal, "/")
-
-      {:ok,
-       %Calculator{
-         input: "",
-         display: "Error",
-         register: 0.0,
-         operator: :idle,
-         state: :error
-       } = _cal} = Calculator.key(cal, "*")
+    test "enter number, operator, number, enter displays the result", %{cal: cal} do
+      press_keys(cal, "123")
+      Calculator.press_key(cal, "+")
+      press_keys(cal, "123")
+      Calculator.press_key(cal, "=")
+      assert Calculator.display(cal) == "246.0"
     end
+
+    test "continue after enter with next operator", %{cal: cal} do
+      press_keys(cal, "123+123=+123.4=")
+      assert Calculator.display(cal) == "369.4"
+    end
+
+    test "ignore unknown keys", %{cal: cal} do
+      press_keys(cal, "   123 + 123 = + 123.4 =")
+      assert Calculator.display(cal) == "369.4"
+    end
+
+    test "d=div operators", %{cal: cal} do
+      press_keys(cal, "5 d 2=")
+      assert Calculator.display(cal) == "2"
+    end
+
+    test "r=rem operators", %{cal: cal} do
+      press_keys(cal, "5 r 2=")
+      assert Calculator.display(cal) == "1"
+    end
+  end
+
+  describe "Using two independent calculators" do
+    setup _ do
+      {:ok, cal1} = Calculator.start_link()
+      {:ok, cal2} = Calculator.start_link()
+      {:ok, %{c1: cal1, c2: cal2}}
+    end
+
+    test "two paralell calculators", %{c1: c1, c2: c2} do
+      press_keys(c1, "1+2= +3= -1=")
+      press_keys(c2, "1.4 / 2 =")
+
+      assert Calculator.display(c1) == "5.0"
+      assert Calculator.display(c2) == "0.7"
+    end
+  end
+
+  defp press_keys(cal, keys) do
+    String.split(keys, "", trim: true)
+    |> Enum.each(fn key -> Calculator.press_key(cal, key) end)
   end
 end
