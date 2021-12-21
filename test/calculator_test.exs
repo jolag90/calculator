@@ -68,8 +68,8 @@ defmodule CalculatorTest do
 
   describe "Using two independent calculators" do
     setup _ do
-      {:ok, cal1} = Calculator.start_link()
-      {:ok, cal2} = Calculator.start_link()
+      {:ok, cal1} = Calculator.start_link(:c1)
+      {:ok, cal2} = Calculator.start_link(:c2)
       {:ok, %{c1: cal1, c2: cal2}}
     end
 

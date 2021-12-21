@@ -13,7 +13,7 @@ defmodule Calculator do
   Starts a new calculator process.
   Returns `{:ok, pid}` or an error.
   """
-  def start_link(_args  \\ :ok), do: GenServer.start_link(__MODULE__, %__MODULE__{})
+  def start_link(name  \\ Calculator), do: GenServer.start_link(__MODULE__, %__MODULE__{}, name: name)
 
   @doc """
   Stops the server/calculator with the given `pid`
