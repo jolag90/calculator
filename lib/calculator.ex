@@ -14,13 +14,8 @@ defmodule Calculator do
   Returns `{:ok, pid}` or an error.
   """
   def start_link(name_or_keyword \\ Calculator)
-  def start_link(name) when is_atom(name) do
-   GenServer.start_link(__MODULE__, %__MODULE__{}, name: name)
-  end
-
-  def start_link([name: name]) do
-    GenServer.start_link(__MODULE__, %__MODULE__{}, name: name)
-   end
+  def start_link(name) when is_atom(name), do: find_or_start(name)
+  def start_link(name: name), do: find_or_start(name)
 
   @doc """
   Stops the server/calculator with the given `pid`
@@ -98,5 +93,12 @@ defmodule Calculator do
   defp calculation(a, b_str, fun) do
     {b, ""} = Float.parse(b_str)
     fun.(a, b)
+  end
+
+  defp find_or_start(name) do
+    case GenServer.start_link(__MODULE__, %__MODULE__{}, name: name) do
+      {:ok, pid} -> {:ok, pid}
+      {:error, {:already_started, pid}} -> {:ok, pid}
+    end
   end
 end

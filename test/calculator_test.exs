@@ -51,7 +51,7 @@ defmodule CalculatorTest do
     end
 
     test "ignore unknown keys", %{cal: cal} do
-      press_keys(cal, "   123 + 123 = + 123.4 =")
+      press_keys(cal, "123 + 123 = + 123.4 =")
       assert Calculator.display(cal) == "369.4"
     end
 
@@ -79,6 +79,11 @@ defmodule CalculatorTest do
 
       assert Calculator.display(c1) == "5.0"
       assert Calculator.display(c2) == "0.7"
+    end
+
+    test "start with the same name, returns the running pid", %{c1: c1} do
+      {:ok, cal1} = Calculator.start_link(:c1)
+      assert cal1 == c1
     end
   end
 
